@@ -9,7 +9,7 @@ export default {
 
     authority: [],
 
-    hasRouter: false,
+    hasRouter: true,
 
     activeTabsValue: 'Index',
 

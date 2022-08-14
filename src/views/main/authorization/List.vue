@@ -5,7 +5,7 @@
         type="primary"
         size="small"
         @click="add()"
-        v-if="hasAuthority('system-authorization-add')"
+        v-if="hasAuthority('system-authorization-save')"
         >新增</el-button
       >
     </el-row>
@@ -15,7 +15,6 @@
       row-key="id"
       border
       stripe
-      default-expand-all
       :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
     >
       <el-table-column prop="name" label="名称" width="180" />
@@ -50,14 +49,14 @@
         <template slot-scope="scope">
           <el-button
             size="mini"
-            @click="handleEdit(scope.$index, scope.row)"
+            @click="handleEdit(scope.row.id)"
             v-if="hasAuthority('system-authorization-update')"
             >修改</el-button
           >
           <el-button
             size="mini"
             type="danger"
-            @click="handleDelete(scope.$index, scope.row)"
+            @click="handleDelete(scope.row.id)"
             v-if="hasAuthority('system-authorization-delete')"
             >删除</el-button
           >
@@ -93,7 +92,7 @@ export default {
     },
     // 加载表格数据
     loadTableData () {
-      this.$axios.post('/authorization/list').then(response => {
+      this.$axios.get('/system/authorization/list').then(response => {
         this.tableData = response.data.data
       })
     },
@@ -104,17 +103,22 @@ export default {
       this.$refs.AuthorizationAddAndUpdateDialog.dialogVisible = true
       this.$refs.AuthorizationAddAndUpdateDialog.authorizations = this.tableData
     },
-    handleDelete () {
+    handleDelete (id) {
       this.common
         .myConfirm('此操作将永久删除权限, 确定要继续吗?')
         .then(() => {
-          this.common.myMessageSuccess('删除成功')
-          this.loadTableData()
+          this.$axios.get('system/authorization/delete/' + id).then(res => {
+            console.log(res)
+            this.common.myMessageSuccess(res.data.msg)
+            if (res.data.code === 200) {
+              this.loadTableData()
+            }
+          })
         })
         .catch(() => {})
     },
     handleEdit (id) {
-      this.$axios.get('/authorization/getInfo/' + id).then(res => {
+      this.$axios.get('/system/authorization/getInfo/' + id).then(res => {
         this.$refs.AuthorizationAddAndUpdateDialog.editForm = res.data.data
         this.showDialog()
       })

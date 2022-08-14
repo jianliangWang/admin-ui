@@ -62,8 +62,8 @@
             placeholder="请选择类型"
             class="authorizationInput"
           >
-            <el-option label="菜单" value="menu"></el-option>
-            <el-option label="按钮" value="button"></el-option>
+            <el-option label="菜单" value="Menu"></el-option>
+            <el-option label="按钮" value="Button"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="URL" prop="url">
@@ -106,10 +106,11 @@ export default {
     submitForm (formName) {
       this.$refs[formName].validate(valid => {
         if (valid) {
-          if (this.editForm.id !== '') {
-            this.sendRequest('/authorization/update', '修改')
+          console.log(this.editForm.id)
+          if (this.editForm.id) {
+            this.sendRequest('/system/authorization/update', '修改')
           } else {
-            this.sendRequest('/authorization/add', '添加')
+            this.sendRequest('/system/authorization/save', '添加')
           }
         } else {
           return false
@@ -162,7 +163,7 @@ export default {
         ],
         code: [
           { required: true, message: '请输入权限编码', trigger: 'blur' },
-          { min: 2, max: 10, message: '长度在2到10个字符', trigger: 'blur' }
+          { min: 2, max: 100, message: '长度在2到10个字符', trigger: 'blur' }
         ],
         type: [{ required: true, message: '请选择类型', trigger: 'blur' }],
         status: [{ required: true, message: '请选择状态' }]

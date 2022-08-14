@@ -41,12 +41,13 @@ const router = new VueRouter({
 router.beforeEach((to, from, next) => {
   if (!store.state.menus.hasRouter) {
     axios
-      .post('/system/menu/list', {
+      .post('/system/user/getLeftMenus', null, {
         headers: {
-          Authorization: localStorage.getItem('token')
+          authorization: localStorage.getItem('token')
         }
       })
       .then(res => {
+        console.log('查询菜单结果' + store.state.menus.hasRouter)
         const menus = res.data.data
         const newRoutes = router.options.routes
         menus.forEach(menu => {

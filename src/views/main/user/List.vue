@@ -1,14 +1,14 @@
 <template>
   <div>
-    <el-form :inline="true" :model="formInline" class="demo-form-inline">
+    <el-form :inline="true" :model="searchForm" class="demo-form-inline">
       <el-form-item label="用户名">
-        <el-input v-model="formInline.userName" placeholder="用户名"></el-input>
+        <el-input v-model="searchForm.username" placeholder="用户名"></el-input>
       </el-form-item>
       <el-form-item>
         <el-button
           type="primary"
           @click="query"
-          v-if="hasAuthority('system-user-queryList')"
+          v-if="hasAuthority('system-user-list')"
           >查询</el-button
         >
       </el-form-item>
@@ -21,7 +21,7 @@
       <el-button
         type="primary"
         :disabled="batchBtnDisable"
-        @click="handleStatusBatch('enable')"
+        @click="handleStatusBatch('normal')"
         v-if="hasAuthority('system-user-batchEnable')"
         >批量启用</el-button
       >
@@ -49,13 +49,34 @@
     >
       <el-table-column type="selection" width="55"></el-table-column>
       <el-table-column
-        prop="userName"
+        prop="username"
         label="用户名"
         width="180"
       ></el-table-column>
+      <el-table-column prop="roleName" label="角色名称" width="180">
+        <template slot-scope="scope">
+          <el-tag
+            :key="item.name"
+            type="info"
+            size="small"
+            v-for="item in scope.row.roles"
+            >{{ item.name }}</el-tag
+          >
+        </template>
+      </el-table-column>
       <el-table-column
-        prop="roleName"
-        label="角色名称"
+        prop="phoneNo"
+        label="手机号"
+        width="180"
+      ></el-table-column>
+      <el-table-column
+        prop="lastLoginDate"
+        label="上次登录日期"
+        width="180"
+      ></el-table-column>
+      <el-table-column
+        prop="createDate"
+        label="创建时间"
         width="180"
       ></el-table-column>
       <el-table-column prop="status" label="状态" width="100">
@@ -69,24 +90,24 @@
           >
         </template>
       </el-table-column>
-      <el-table-column prop="desc" label="描述"></el-table-column>
+      <el-table-column prop="remark" label="描述"></el-table-column>
       <el-table-column label="操作" width="160">
         <template slot-scope="scope">
           <el-button
             type="text"
-            @click="handleSetRole(scope.row)"
+            @click="handleSetRole(scope.row.id)"
             v-if="hasAuthority('system-user-setRole')"
             >分配角色</el-button
           >
           <el-button
             type="text"
-            @click="handleEdit(scope.$index, scope.row)"
+            @click="handleEdit(scope.row.id)"
             v-if="hasAuthority('system-user-update')"
             >修改</el-button
           >
           <el-button
             type="text"
-            @click="handleDelete(scope.$index, scope.row)"
+            @click="handleDelete(scope.row.id)"
             v-if="hasAuthority('system-user-delete')"
             >删除</el-button
           >
@@ -94,13 +115,16 @@
       </el-table-column>
     </el-table>
 
-    <Pagination ref="pagination"></Pagination>
+    <Pagination ref="pagination" @reloadData="loadTableData"></Pagination>
     <AddAndUpdateDialog
       ref="addAndUpdateDialog"
       @reloadData="loadTableData"
     ></AddAndUpdateDialog>
 
-    <UserRoleDialog ref="userRoleDialog"></UserRoleDialog>
+    <UserRoleDialog
+      ref="userRoleDialog"
+      @reloadData="loadTableData"
+    ></UserRoleDialog>
   </div>
 </template>
 
@@ -108,6 +132,7 @@
 import AddAndUpdateDialog from './AddAndUpdateDialog.vue'
 import Pagination from '@/views/main/include/Pagination'
 import UserRoleDialog from './UserRoleDialog.vue'
+import qs from 'qs'
 
 export default {
   name: 'UserList',
@@ -116,23 +141,37 @@ export default {
       batchBtnDisable: true,
       selectIds: [],
       tableData: [],
-      formInline: {
-        user: '',
-        region: ''
+      searchForm: {
+        username: ''
       }
     }
   },
   methods: {
     query () {
-      console.log('query!')
+      this.$axios
+        .post(
+          '/system/user/list?' +
+            qs.stringify({
+              username: this.searchForm.username,
+              currentPage: this.$refs.pagination
+                ? this.$refs.pagination.currentPage
+                : 1,
+              pageSize: this.$refs.pagination
+                ? this.$refs.pagination.pageSize
+                : 10
+            })
+        )
+        .then(response => {
+          this.tableData = response.data.data.records
+          this.$refs.pagination.total = response.data.data.total
+          this.$refs.pagination.pageSize = response.data.data.size
+          this.$refs.pagination.currentPage = response.data.data.current
+        })
     },
     loadTableData () {
-      this.$axios.post('/user/list').then(response => {
-        this.tableData = response.data.data.records
-        this.$refs.pagination.total = response.data.data.total
-        this.$refs.pagination.pageSize = response.data.data.pageSize
-        this.$refs.pagination.currentPage = response.data.data.currentPage
-      })
+      this.selectIds = []
+      this.batchBtnDisable = true
+      this.query()
     },
     // 新增
     add () {
@@ -154,35 +193,19 @@ export default {
       }
     },
     // 删除的时候触发
-    handleDelete () {
-      this.common
-        .myConfirm('此操作将永久删除角色, 确定要继续吗?')
-        .then(() => {
-          this.common.myMessageSuccess('删除成功')
-          this.loadTableData()
-        })
-        .catch(() => {})
-    },
-    handleBatchEnable () {
-      this.common
-        .myConfirm('确定要启用吗？')
-        .then(() => {
-          this.common.myMessageSuccess('启用成功')
-          this.loadTableData()
-        })
-        .catch(() => {})
+    handleDelete (id) {
+      this.selectIds.push(id)
+      this.handleBatchDelete()
     },
     // 批量禁用或启用
     handleStatusBatch (status) {
+      console.log(status)
       this.common
         .myConfirm('确定要操作吗？')
         .then(() => {
           this.batchOperation(
-            '/user/updateStatus',
-            {
-              status: status,
-              ids: this.selectIds
-            },
+            '/system/user/updateStatus/' + status,
+            JSON.stringify(this.selectIds),
             '批量操作成功'
           )
         })
@@ -190,13 +213,12 @@ export default {
     },
     // 批量删除
     handleBatchDelete () {
-      console.log(this.selectIds)
       this.common
         .myConfirm('此操作将永久删除角色, 确定要继续吗?')
         .then(() => {
           this.batchOperation(
-            '/user/batchDelete',
-            { ids: this.selectIds },
+            'system/user/delete',
+            JSON.stringify(this.selectIds),
             '删除成功'
           )
         })
@@ -217,14 +239,20 @@ export default {
     },
     // 编辑
     handleEdit (id) {
-      this.$axios.post('/user/getInfo/' + id).then(res => {
+      this.$axios.get('/system/user/getInfo/' + id).then(res => {
+        console.log(res)
         this.$refs.addAndUpdateDialog.userForm = res.data.data
         this.showAddAndUpdateDialog()
       })
     },
-    handleSetRole (row) {
-      this.$refs.userRoleDialog.userId = row.id
-      this.$refs.userRoleDialog.userRoleDialogVisible = true
+    // 设置角色
+    handleSetRole (id) {
+      this.$axios.get('/system/user/getUserRole/' + id).then(res => {
+        this.$refs.userRoleDialog.roles = res.data.data.roleList
+        this.$refs.userRoleDialog.userId = id
+        this.$refs.userRoleDialog.checkedRoles = res.data.data.ckRoleIds
+        this.$refs.userRoleDialog.userRoleDialogVisible = true
+      })
     }
   },
   created () {

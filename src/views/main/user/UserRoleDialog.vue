@@ -9,12 +9,9 @@
       v-model="checkedRoles"
       @change="handleCheckedRolesChange"
     >
-      <el-checkbox
-        v-for="role in roles"
-        :label="role.roleId"
-        :key="role.roleId"
-        >{{ role.roleName }}</el-checkbox
-      >
+      <el-checkbox v-for="role in roles" :label="role.id" :key="role.id">{{
+        role.name
+      }}</el-checkbox>
     </el-checkbox-group>
     <span slot="footer" class="dialog-footer">
       <el-button
@@ -29,11 +26,6 @@
 </template>
 
 <script>
-const roleOption = [
-  { roleId: 1, roleName: '管理员' },
-  { roleId: 2, roleName: '普通用户' },
-  { roleId: 3, roleName: '访客' }
-]
 export default {
   data () {
     return {
@@ -41,7 +33,7 @@ export default {
       userRoleDialogVisible: false,
       checkAll: false,
       checkedRoles: [],
-      roles: roleOption,
+      roles: [],
       isIndeterminate: true
     }
   },
@@ -57,7 +49,14 @@ export default {
       this.userRoleDialogVisible = false
     },
     getCheckedKeys () {
-      console.log(this.checkedRoles)
+      this.$axios
+        .post('/system/user/setRole/' + this.userId, this.checkedRoles)
+        .then(res => {
+          this.$emit('reloadData')
+          this.checkedRoles = []
+          this.userRoleDialogVisible = false
+          this.common.myMessageSuccess('操作成功')
+        })
     }
   }
 }

@@ -2,12 +2,12 @@ import axios from 'axios'
 import router from './router'
 import Element from 'element-ui'
 
-// axios.defaults.baseURL = "https://localhost:8081"
+axios.defaults.baseURL = 'http://localhost:8888'
 
 const request = axios.create({
   timeout: 5000,
   headers: {
-    'Content-Type': 'application/json; charset=utf-8'
+    'Content-Type': 'application/json;charset=utf-8'
   }
 })
 
@@ -23,7 +23,8 @@ request.interceptors.response.use(
     if (res.code === 200) {
       return response
     } else {
-      Element.Message.error(res.msg ? '系统异常' : res.msg)
+      Element.Message.error(res.msg ? res.msg : '系统异常')
+      return Promise.reject(res.msg)
     }
   },
   error => {

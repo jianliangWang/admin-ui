@@ -23,10 +23,13 @@ export default {
   },
   methods: {
     handleSizeChange (val) {
-      console.log(`每页 ${val} 条`)
+      this.pageSize = val
+      this.$emit('reloadData')
     },
     handleCurrentChange (val) {
-      console.log(`当前页: ${val}`)
+      this.currentPage = val
+      console.log(this.currentPage)
+      this.$emit('reloadData')
     }
   }
 }

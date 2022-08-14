@@ -21,7 +21,7 @@
       <el-button
         type="primary"
         :disabled="batchBtnDisable"
-        @click="handleStatusBatch('enable')"
+        @click="handleStatusBatch('normal')"
         v-if="hasAuthority('system-role-batchEnable')"
         >批量启用</el-button
       >
@@ -65,24 +65,24 @@
           >
         </template>
       </el-table-column>
-      <el-table-column prop="desc" label="描述"></el-table-column>
+      <el-table-column prop="description" label="描述"></el-table-column>
       <el-table-column label="操作" width="160">
         <template slot-scope="scope">
           <el-button
             type="text"
-            @click="handleAuthority(scope.row)"
+            @click="handleAuthority(scope.row.id)"
             v-if="hasAuthority('system-role-setAuth')"
             >分配权限</el-button
           >
           <el-button
             type="text"
-            @click="handleEdit(scope.$index, scope.row)"
+            @click="handleEdit(scope.row.id)"
             v-if="hasAuthority('system-role-update')"
             >修改</el-button
           >
           <el-button
             type="text"
-            @click="handleDelete(scope.$index, scope.row)"
+            @click="handleDelete(scope.row.id)"
             v-if="hasAuthority('system-role-delete')"
             >删除</el-button
           >
@@ -90,13 +90,16 @@
       </el-table-column>
     </el-table>
 
-    <Pagination ref="pagination"></Pagination>
+    <Pagination ref="pagination" @reloadData="loadTableData"></Pagination>
 
     <AddAndUpdateDialog
       ref="addAndUpdateDialog"
       @reloadData="loadTableData"
     ></AddAndUpdateDialog>
-    <RoleAuthorityDialog ref="roleAuthorityDialog"></RoleAuthorityDialog>
+    <RoleAuthorityDialog
+      ref="roleAuthorityDialog"
+      @reloadData="loadTableData"
+    ></RoleAuthorityDialog>
   </div>
 </template>
 
@@ -104,6 +107,7 @@
 import AddAndUpdateDialog from './AddAndUpdateDialog.vue'
 import RoleAuthorityDialog from './RoleAuthorityDialog.vue'
 import Pagination from '@/views/main/include/Pagination'
+import qs from 'qs'
 
 export default {
   name: 'Admin-Role',
@@ -120,15 +124,30 @@ export default {
   },
   methods: {
     query () {
-      console.log('query!')
+      this.$axios
+        .post(
+          '/system/role/list?' +
+            qs.stringify({
+              roleCode: this.formInline.code,
+              currentPage: this.$refs.pagination
+                ? this.$refs.pagination.currentPage
+                : 1,
+              pageSize: this.$refs.pagination
+                ? this.$refs.pagination.pageSize
+                : 10
+            })
+        )
+        .then(response => {
+          this.tableData = response.data.data.records
+          this.$refs.pagination.total = response.data.data.total
+          this.$refs.pagination.pageSize = response.data.data.pageSize
+          this.$refs.pagination.currentPage = response.data.data.currentPage
+        })
     },
     loadTableData () {
-      this.$axios.post('/role/list').then(response => {
-        this.tableData = response.data.data.records
-        this.$refs.pagination.total = response.data.data.total
-        this.$refs.pagination.pageSize = response.data.data.pageSize
-        this.$refs.pagination.currentPage = response.data.data.currentPage
-      })
+      this.selectIds = []
+      this.batchBtnDisable = true
+      this.query()
     },
     // 新增
     add () {
@@ -138,9 +157,12 @@ export default {
       this.$refs.addAndUpdateDialog.addAndUpdateDialogVisible = true
     },
     // 授权
-    handleAuthority (row) {
-      console.log(row.id)
-      this.$refs.roleAuthorityDialog.roleId = row.id
+    handleAuthority (id) {
+      this.$refs.roleAuthorityDialog.roleId = id
+      this.$axios.get('/system/role/getAuth/' + id).then(res => {
+        this.$refs.roleAuthorityDialog.data = res.data.data.authorizationList
+        this.$refs.roleAuthorityDialog.checkKey = res.data.data.roleAuthList
+      })
       this.$refs.roleAuthorityDialog.roleAuthorityDialogVisible = true
     },
     // 选中、取消checkbox触发事件
@@ -156,14 +178,9 @@ export default {
       }
     },
     // 删除的时候触发
-    handleDelete () {
-      this.common
-        .myConfirm('此操作将永久删除角色, 确定要继续吗?')
-        .then(() => {
-          this.common.myMessageSuccess('删除成功')
-          this.loadTableData()
-        })
-        .catch(() => {})
+    handleDelete (id) {
+      this.selectIds.push(id)
+      this.handleBatchDelete()
     },
     handleBatchEnable () {
       this.common
@@ -180,11 +197,8 @@ export default {
         .myConfirm('确定要操作吗？')
         .then(() => {
           this.batchOperation(
-            '/role/updateStatus',
-            {
-              status: status,
-              ids: this.selectIds
-            },
+            '/system/role/updateStatus/' + status,
+            this.selectIds,
             '批量操作成功'
           )
         })
@@ -192,15 +206,14 @@ export default {
     },
     // 批量删除
     handleBatchDelete () {
-      console.log(this.selectIds)
+      if (this.selectIds.length <= 0) {
+        this.common.message('请选择')
+        return
+      }
       this.common
         .myConfirm('此操作将永久删除角色, 确定要继续吗?')
         .then(() => {
-          this.batchOperation(
-            '/role/batchDelete',
-            { ids: this.selectIds },
-            '删除成功'
-          )
+          this.batchOperation('system/role/delete', this.selectIds, '删除成功')
         })
         .catch(() => {})
     },
@@ -219,7 +232,8 @@ export default {
     },
     // 编辑
     handleEdit (id) {
-      this.$axios.post('/role/getInfo/' + id).then(res => {
+      console.log(id)
+      this.$axios.get('/system/role/getInfo/' + id).then(res => {
         this.$refs.addAndUpdateDialog.roleForm = res.data.data
         this.showAddAndUpdateDialog()
       })

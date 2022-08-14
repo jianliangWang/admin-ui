@@ -20,9 +20,9 @@
         label-width="100px"
         class="demo-loginForm"
       >
-        <el-form-item label="用户名" prop="userName" style="width: 380px">
+        <el-form-item label="用户名" prop="username" style="width: 380px">
           <el-input
-            v-model="loginForm.userName"
+            v-model="loginForm.username"
             style="width: 100%;"
             autocomplete="off"
           ></el-input>
@@ -40,7 +40,11 @@
             v-model="loginForm.verifyCode"
             style="width: 172px; float: left"
           ></el-input>
-          <el-image :src="captchaImg" class="captchaImg"></el-image>
+          <el-image
+            :src="captchaImg"
+            class="captchaImg"
+            @click="getCaptcha"
+          ></el-image>
         </el-form-item>
         <el-form-item style="widht: 380px">
           <el-button type="primary" @click="submitForm('loginForm')"
@@ -54,19 +58,20 @@
 </template>
 
 <script>
+import qs from 'qs'
 export default {
   name: 'admin-login',
   data () {
     return {
       loginForm: {
-        userName: '',
+        username: '',
         password: '',
         verifyCode: '',
-        token: ''
+        key: ''
       },
       captchaImg: null,
       rules: {
-        userName: [
+        username: [
           { required: true, message: '请输入用户名', trigger: 'blur' }
         ],
         password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
@@ -80,23 +85,14 @@ export default {
     submitForm (formName) {
       this.$refs[formName].validate(valid => {
         if (valid) {
-          this.$axios.post('/login', this.loginForm).then(res => {
-            const jwt = res.headers.authorization
-            this.$store.commit('SET_TOKEN', jwt)
-            this.$router.push('/home')
-            const authorities = []
-            const authData = res.data.data
-            const authDataFor = authData => {
-              authData.forEach(item => {
-                authorities.push(item.code)
-                if (item.children.length > 0) {
-                  authDataFor(item.children)
-                }
-              })
-            }
-            authDataFor(authData)
-            this.$store.commit('setAuthority', authorities)
-          })
+          this.$axios
+            .post('/login?' + qs.stringify(this.loginForm))
+            .then(res => {
+              const jwt = res.headers.authorization
+              this.$store.commit('SET_TOKEN', jwt)
+              this.$router.push('/home')
+              this.$store.commit('changeHasRouterStatus', false)
+            })
         } else {
           console.log('error submit!!')
           return false
@@ -105,15 +101,17 @@ export default {
     },
     resetForm (formName) {
       this.$refs[formName].resetFields()
+      this.getCaptcha()
     },
     getCaptcha () {
       this.$axios.get('/captcha').then(res => {
-        this.loginForm.token = res.data.data.token
+        this.loginForm.key = res.data.data.key
         this.captchaImg = res.data.data.captchaImg
       })
     }
   },
   created () {
+    this.$store.commit('SET_TOKEN', '')
     this.getCaptcha()
   }
 }
