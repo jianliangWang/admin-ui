@@ -9,7 +9,7 @@ export default {
 
     authority: [],
 
-    hasRouter: true,
+    hasRouter: false,
 
     activeTabsValue: 'Index',
 
@@ -34,16 +34,13 @@ export default {
       state.hasRouter = hasRouter
     },
 
-    addTab (state, tab) {
-      console.log('state:' + tab.name)
-      const index = state.activeTabs.findIndex(e => e.name === tab.name)
+    addTab (state, tabItem) {
+      const index = state.activeTabs.findIndex(e => e.name === tabItem.name)
       if (index === -1) {
-        state.activeTabs.push({
-          name: tab.name,
-          label: tab.label
-        })
+        state.activeTabs.push(tabItem)
       }
-      state.activeTabsValue = tab.name
+      console.log(state.activeTabsValue)
+      state.activeTabsValue = tabItem.name
     },
     resetState (state) {
       state.hasRouter = false

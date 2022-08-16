@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import store from '@/store'
-import axios from 'axios'
+import axios from '../axios'
 import VueRouter from 'vue-router'
 import LoginVue from '../views/Login.vue'
 
@@ -9,7 +9,7 @@ Vue.use(VueRouter)
 const routes = [
   {
     path: '/',
-    name: 'admin-login',
+    name: 'login',
     component: LoginVue
   },
   {
@@ -39,20 +39,26 @@ const router = new VueRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  if (!store.state.menus.hasRouter) {
+  let hasRouter = store.state.menus.hasRouter
+  console.log(to.path === '/login')
+  const token = localStorage.getItem('token')
+  if (to.path === '/login') {
+    next()
+  } else if (!token) {
+    next({ path: '/login' })
+  }
+  if (token && !hasRouter) {
     axios
-      .post('/system/user/getLeftMenus', null, {
-        headers: {
-          authorization: localStorage.getItem('token')
-        }
-      })
+      .post('/system/user/getLeftMenus')
       .then(res => {
-        console.log('查询菜单结果' + store.state.menus.hasRouter)
+        console.log(res.data)
         const menus = res.data.data
+        //  现有路由
         const newRoutes = router.options.routes
         menus.forEach(menu => {
           if (menu.children) {
             menu.children.forEach(e => {
+              // 转换成路由
               const route = menuToRoute(e)
               if (route) {
                 newRoutes[2].children.push(route)
@@ -80,12 +86,14 @@ router.beforeEach((to, from, next) => {
         }
         authDataFor(menus)
         store.commit('setAuthority', authorities)
+        hasRouter = true
         store.commit('changeHasRouterStatus', true)
       })
   }
   next()
 })
 
+// 导航转换成路由
 const menuToRoute = menu => {
   if (!menu.component) {
     return null
@@ -93,7 +101,10 @@ const menuToRoute = menu => {
   const route = {
     name: menu.name,
     path: menu.url,
-    meta: { label: menu.label },
+    meta: {
+      icon: menu.icon,
+      label: menu.label
+    },
     component: () => import('@/views/' + menu.component + '.vue')
   }
   return route

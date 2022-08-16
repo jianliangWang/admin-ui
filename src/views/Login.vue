@@ -91,8 +91,7 @@ export default {
               const jwt = res.headers.authorization
               this.$store.commit('SET_TOKEN', jwt)
               this.$router.push('/home')
-              this.$store.commit('changeHasRouterStatus', false)
-            })
+            }).catch(this.getCaptcha())
         } else {
           console.log('error submit!!')
           return false
@@ -101,7 +100,6 @@ export default {
     },
     resetForm (formName) {
       this.$refs[formName].resetFields()
-      this.getCaptcha()
     },
     getCaptcha () {
       this.$axios.get('/captcha').then(res => {

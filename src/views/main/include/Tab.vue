@@ -20,7 +20,9 @@
 export default {
   name: 'AdminTab',
   data () {
-    return {}
+    return {
+      lastActiveValue: 'Index'
+    }
   },
   computed: {
     activeTabs: {
@@ -33,7 +35,6 @@ export default {
     },
     activeTabsValue: {
       get () {
-        console.log('activeTabsValue' + this.$store.state.menus.activeTabsValue)
         return this.$store.state.menus.activeTabsValue
       },
       set (val) {
@@ -58,11 +59,16 @@ export default {
           }
         })
       }
+      this.lastActiveValue = activeName
       this.activeTabsValue = activeName
       this.activeTabs = tabs.filter(tab => tab.name !== targetName)
       this.$router.push({ name: activeName })
     },
     clickTab (target) {
+      if (target.name === this.lastActiveValue) {
+        return
+      }
+      this.lastActiveValue = target.name
       this.$router.push({ name: target.name })
     }
   }

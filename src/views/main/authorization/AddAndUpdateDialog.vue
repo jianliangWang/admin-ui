@@ -20,9 +20,14 @@
             placeholder="请选择类型"
             class="authorizationInput"
           >
+          <el-option
+                label="根目录"
+                value="admin"
+                key="admin"
+              ></el-option>
             <template v-for="authorization in authorizations">
               <el-option
-                :label="authorization.name"
+                :label="authorization.label"
                 :value="authorization.code"
                 :key="authorization.id"
               ></el-option>
@@ -32,13 +37,19 @@
                   :value="item.code"
                   v-for="item in authorization.children"
                   :key="item.id"
-                  >{{ '--' + item.name }}</el-option
+                  >{{ "--" + item.label }}</el-option
                 >
               </template>
             </template>
           </el-select>
         </el-form-item>
-        <el-form-item label="权限名称" prop="name">
+        <el-form-item label="权限名称" prop="label">
+          <el-input
+            v-model="editForm.label"
+            class="authorizationInput"
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="英文名称" prop="name">
           <el-input
             v-model="editForm.name"
             class="authorizationInput"
@@ -104,7 +115,7 @@
 export default {
   methods: {
     submitForm (formName) {
-      this.$refs[formName].validate(valid => {
+      this.$refs[formName].validate((valid) => {
         if (valid) {
           console.log(this.editForm.id)
           if (this.editForm.id) {
@@ -120,14 +131,14 @@ export default {
     sendRequest (requestUrl, operation) {
       this.$axios
         .post(requestUrl, this.editForm)
-        .then(res => {
+        .then((res) => {
           if (res.data.code === 200) {
             this.common.myMessageSuccess(operation + '成功')
             this.handleClose()
             this.$emit('reloadData', 'reload')
           }
         })
-        .catch(error => {
+        .catch((error) => {
           this.common.myMessageFaild(operation + '失败' + error)
         })
     },
@@ -157,13 +168,16 @@ export default {
         parentId: [
           { required: true, message: '全选择上级权限', trigger: 'blur' }
         ],
-        name: [
+        label: [
           { required: true, message: '请输入权限名称', trigger: 'blur' },
-          { min: 2, max: 10, message: '长度在2到10 个字符', trigger: 'blur' }
+          { min: 2, max: 10, message: '长度在2到30 个字符', trigger: 'blur' }
+        ],
+        name: [
+          { required: true, message: '请输入英文名称', trigger: 'blur' }
         ],
         code: [
           { required: true, message: '请输入权限编码', trigger: 'blur' },
-          { min: 2, max: 100, message: '长度在2到10个字符', trigger: 'blur' }
+          { min: 2, max: 100, message: '长度在2到50个字符', trigger: 'blur' }
         ],
         type: [{ required: true, message: '请选择类型', trigger: 'blur' }],
         status: [{ required: true, message: '请选择状态' }]

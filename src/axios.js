@@ -19,7 +19,6 @@ request.interceptors.request.use(config => {
 request.interceptors.response.use(
   response => {
     const res = response.data
-
     if (res.code === 200) {
       return response
     } else {
@@ -32,9 +31,10 @@ request.interceptors.response.use(
       error.message = error.response.msg
     }
     if (error.response.status === 401) {
+      console.log('请登录')
       router.push('/login')
     }
-
+    console.log(error.response.status)
     Element.Message.error(error.message, { duration: 3000 })
     return Promise.reject(error)
   }

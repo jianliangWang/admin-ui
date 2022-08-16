@@ -6,10 +6,7 @@
 
 <script>
 export default {
-  name: 'HomeIndex',
-  created () {
-    console.log('zxlm')
-  }
+  name: 'HomeIndex'
 }
 </script>
 

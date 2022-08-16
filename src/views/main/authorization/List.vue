@@ -17,7 +17,8 @@
       stripe
       :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
     >
-      <el-table-column prop="name" label="名称" width="180" />
+      <el-table-column prop="label" label="名称" width="180" />
+      <el-table-column prop="name" label="英文名称" width="180" />
       <el-table-column prop="code" label="编码" width="180" />
       <el-table-column prop="icon" label="图标" />
       <el-table-column prop="type" label="类型">
@@ -33,7 +34,6 @@
       </el-table-column>
       <el-table-column prop="url" label="URL" />
       <el-table-column prop="component" label="组件" />
-      <el-table-column prop="order" label="序号" />
       <el-table-column prop="status" label="状态">
         <template slot-scope="scope">
           <el-tag size="mini" v-if="scope.row.status === 'normal'">正常</el-tag>

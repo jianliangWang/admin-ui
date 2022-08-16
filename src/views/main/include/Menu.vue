@@ -9,7 +9,7 @@
       active-text-color="#ffd04b"
       router
     >
-      <el-menu-item index="Index" route="/index">
+      <el-menu-item index="Index" route="/index" @click="addTab('Index', '首页')" name="Index">
         <i class="el-icon-s-home"></i>
         <span slot="title">首页</span>
       </el-menu-item>
@@ -23,7 +23,7 @@
           v-for="item in menu.children"
           :key="item.id"
           :route="item.url"
-          @click="addTab(item)"
+          @click="addTab(item.name, item.label)"
         >
           <i :class="item.icon"></i>
           <span>{{ item.label }}</span>
@@ -40,8 +40,12 @@ export default {
     return {}
   },
   methods: {
-    addTab (menu) {
-      this.$store.commit('addTab', menu)
+    addTab (menuName, menuLabel) {
+      const menuItem = {
+        name: menuName,
+        label: menuLabel
+      }
+      this.$store.commit('addTab', menuItem)
     }
   },
   computed: {
