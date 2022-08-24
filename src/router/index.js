@@ -32,15 +32,17 @@ const routes = [
   }
 ]
 
-const router = new VueRouter({
+const createRouter = () => new VueRouter({
   mode: 'history',
   base: process.env.BASE_URL,
   routes
 })
 
+const router = createRouter()
+
 router.beforeEach((to, from, next) => {
-  let hasRouter = store.state.menus.hasRouter
-  console.log(to.path === '/login')
+  const hasRouter = store.state.menus.hasRouter
+  console.log('hasRouter:' + hasRouter)
   const token = localStorage.getItem('token')
   if (to.path === '/login') {
     next()
@@ -48,10 +50,10 @@ router.beforeEach((to, from, next) => {
     next({ path: '/login' })
   }
   if (token && !hasRouter) {
+    store.commit('changeHasRouterStatus', true)
     axios
       .post('/system/user/getLeftMenus')
       .then(res => {
-        console.log(res.data)
         const menus = res.data.data
         //  现有路由
         const newRoutes = router.options.routes
@@ -86,8 +88,10 @@ router.beforeEach((to, from, next) => {
         }
         authDataFor(menus)
         store.commit('setAuthority', authorities)
-        hasRouter = true
-        store.commit('changeHasRouterStatus', true)
+        next({
+          ...to,
+          replace: true
+        })
       })
   }
   next()

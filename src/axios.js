@@ -27,14 +27,18 @@ request.interceptors.response.use(
     }
   },
   error => {
+    if (error.message.includes('timeout') || error.message.includes('Network Error')) { // 判断请求异常信息中是否含有超时timeout字符串
+      Element.Message.error('请求超时，请稍后再试', { duration: 3000 })
+      router.push('/login')
+      return Promise.reject(error) // reject这个错误信息
+    }
+
     if (error.response.data) {
       error.message = error.response.msg
     }
     if (error.response.status === 401) {
-      console.log('请登录')
       router.push('/login')
     }
-    console.log(error.response.status)
     Element.Message.error(error.message, { duration: 3000 })
     return Promise.reject(error)
   }

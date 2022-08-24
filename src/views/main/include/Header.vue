@@ -26,7 +26,7 @@ export default {
           localStorage.clear()
           sessionStorage.clear()
           this.$store.commit('resetState')
-          this.$router.replace('/login')
+          this.$router.push('/login')
         })
       } else if (command === 'userInfo') {
         this.$router.push('/home/updatePassword')

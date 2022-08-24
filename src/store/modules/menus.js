@@ -39,10 +39,10 @@ export default {
       if (index === -1) {
         state.activeTabs.push(tabItem)
       }
-      console.log(state.activeTabsValue)
       state.activeTabsValue = tabItem.name
     },
     resetState (state) {
+      console.log('resetState方法被调用')
       state.hasRouter = false
       state.activeTabsValue = 'Index'
       state.activeTabs = [

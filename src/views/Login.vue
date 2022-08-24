@@ -19,6 +19,7 @@
         ref="loginForm"
         label-width="100px"
         class="demo-loginForm"
+        @keyup.enter.native="submitForm('loginForm')"
       >
         <el-form-item label="用户名" prop="username" style="width: 380px">
           <el-input
@@ -88,10 +89,14 @@ export default {
           this.$axios
             .post('/login?' + qs.stringify(this.loginForm))
             .then(res => {
+              console.log('为什么没有走登录成功？')
               const jwt = res.headers.authorization
               this.$store.commit('SET_TOKEN', jwt)
               this.$router.push('/home')
-            }).catch(this.getCaptcha())
+            }).catch(error => {
+              console.log('接口或处理逻辑出错' + error)
+              this.getCaptcha()
+            })
         } else {
           console.log('error submit!!')
           return false
