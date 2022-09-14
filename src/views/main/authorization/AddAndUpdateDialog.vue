@@ -20,11 +20,7 @@
             placeholder="请选择类型"
             class="authorizationInput"
           >
-          <el-option
-                label="根目录"
-                value="admin"
-                key="admin"
-              ></el-option>
+            <el-option label="根目录" value="admin" key="admin"></el-option>
             <template v-for="authorization in authorizations">
               <el-option
                 :label="authorization.label"
@@ -33,11 +29,11 @@
               ></el-option>
               <template :v-if="authorization.children">
                 <el-option
-                  :label="item.name"
+                  :label="item.label"
                   :value="item.code"
                   v-for="item in authorization.children"
                   :key="item.id"
-                  >{{ "--" + item.label }}</el-option
+                  >{{ '--' + item.label }}</el-option
                 >
               </template>
             </template>
@@ -115,7 +111,7 @@
 export default {
   methods: {
     submitForm (formName) {
-      this.$refs[formName].validate((valid) => {
+      this.$refs[formName].validate(valid => {
         if (valid) {
           console.log(this.editForm.id)
           if (this.editForm.id) {
@@ -131,14 +127,14 @@ export default {
     sendRequest (requestUrl, operation) {
       this.$axios
         .post(requestUrl, this.editForm)
-        .then((res) => {
+        .then(res => {
           if (res.data.code === 200) {
             this.common.myMessageSuccess(operation + '成功')
             this.handleClose()
             this.$emit('reloadData', 'reload')
           }
         })
-        .catch((error) => {
+        .catch(error => {
           this.common.myMessageFaild(operation + '失败' + error)
         })
     },
@@ -172,9 +168,7 @@ export default {
           { required: true, message: '请输入权限名称', trigger: 'blur' },
           { min: 2, max: 10, message: '长度在2到30 个字符', trigger: 'blur' }
         ],
-        name: [
-          { required: true, message: '请输入英文名称', trigger: 'blur' }
-        ],
+        name: [{ required: true, message: '请输入英文名称', trigger: 'blur' }],
         code: [
           { required: true, message: '请输入权限编码', trigger: 'blur' },
           { min: 2, max: 100, message: '长度在2到50个字符', trigger: 'blur' }

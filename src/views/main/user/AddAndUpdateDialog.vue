@@ -85,17 +85,12 @@ export default {
     },
     // 发送请求
     sendRequest (requestUrl, operation) {
-      this.$axios
-        .post(requestUrl, this.userForm)
-        .then(res => {
-          if (res.data.code === 200) {
-            this.common.myMessageSuccess(operation + '成功')
-            this.handleClose()
-          }
-        })
-        .catch(error => {
-          this.common.myMessageFaild(operation + '失败' + error)
-        })
+      this.$axios.post(requestUrl, this.userForm).then(res => {
+        if (res.data.code === 200) {
+          this.common.myMessageSuccess(operation + '成功')
+          this.handleClose()
+        }
+      })
     },
     // 重置
     resetForm (formName) {
